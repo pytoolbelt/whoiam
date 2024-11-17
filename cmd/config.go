@@ -1,0 +1,150 @@
+/*
+Copyright © 2024 Jesse Maitland jesse@pytoolbelt.com
+*/
+package cmd
+
+import (
+	"fmt"
+	"github.com/pytoolbelt/whoiam/internal"
+	"github.com/spf13/cobra"
+	"os"
+)
+
+// configCmd represents the config command
+var configCmd = &cobra.Command{
+	Use:   "config",
+	Short: "Interact with the whoiam config file",
+	Long:  ``,
+}
+
+func addEntrypoint(cmd *cobra.Command, args []string) {
+	accountName, _ := cmd.Flags().GetString("account-name")
+	accountNumber, _ := cmd.Flags().GetString("account-number")
+
+	if accountName == "" || accountNumber == "" {
+		fmt.Println("--account-name and --account-number are required")
+		os.Exit(1)
+	}
+
+	cfgPath, err := internal.NewConfigPath()
+	internal.HandelError(err)
+
+	cfg, err := cfgPath.LoadConfig()
+	internal.HandelError(err)
+
+	if cfg.AccountExists(accountNumber) {
+		fmt.Printf("Account already exists in config: %s\n", accountNumber)
+		os.Exit(1)
+	}
+
+	err = cfg.AddAccount(accountName, accountNumber)
+	internal.HandelError(err)
+
+	err = cfgPath.SaveConfig(cfg)
+	internal.HandelError(err)
+
+	fmt.Printf("Added -- Account Number: %s Account Name: %s\n", accountNumber, accountName)
+
+	os.Exit(0)
+}
+
+var addCmd = &cobra.Command{
+	Use:   "add",
+	Short: "Add to the whoiam config file",
+	Run:   addEntrypoint,
+}
+
+func viewEntrypoint(cmd *cobra.Command, args []string) {
+	cfgPath, err := internal.NewConfigPath()
+	internal.HandelError(err)
+
+	cfg, err := cfgPath.LoadConfig()
+	internal.HandelError(err)
+
+	cfg.PrintConfigTable()
+
+	os.Exit(0)
+}
+
+var viewCmd = &cobra.Command{
+	Use:   "view",
+	Short: "View the whoiam config file",
+	Run:   viewEntrypoint,
+}
+
+func deleteEntrypoint(cmd *cobra.Command, args []string) {
+	accountNumber, _ := cmd.Flags().GetString("account-number")
+
+	if accountNumber == "" {
+		fmt.Println("--account-number is required")
+		os.Exit(1)
+	}
+
+	cfgPath, err := internal.NewConfigPath()
+	internal.HandelError(err)
+
+	cfg, err := cfgPath.LoadConfig()
+	internal.HandelError(err)
+
+	if !cfg.AccountExists(accountNumber) {
+		fmt.Printf("Account does not exist in config: %s\n", accountNumber)
+		os.Exit(1)
+	}
+
+	err = cfg.DeleteAccount(accountNumber)
+	internal.HandelError(err)
+
+	err = cfgPath.SaveConfig(cfg)
+	internal.HandelError(err)
+
+	fmt.Printf("Deleted -- Account Number: %s\n", accountNumber)
+
+	os.Exit(0)
+}
+
+var deleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete from the whoiam config file",
+	Run:   deleteEntrypoint,
+}
+
+func initEntrypoint(cmd *cobra.Command, args []string) {
+	cfgPath, err := internal.NewConfigPath()
+	internal.HandelError(err)
+
+	if cfgPath.Exists() {
+		fmt.Println("Config file already exists")
+		os.Exit(1)
+	}
+
+	err = cfgPath.Create()
+	internal.HandelError(err)
+
+	cfg, err := internal.NewTemplateConfig()
+	internal.HandelError(err)
+
+	err = cfgPath.SaveConfig(cfg)
+	internal.HandelError(err)
+
+	os.Exit(0)
+}
+
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "create a new whoiam config file",
+	Run:   initEntrypoint,
+}
+
+func init() {
+	rootCmd.AddCommand(configCmd)
+	configCmd.AddCommand(initCmd)
+	configCmd.AddCommand(viewCmd)
+
+	configCmd.AddCommand(addCmd)
+	addCmd.Flags().StringP("account-name", "a", "", "AWS Account Name")
+	addCmd.Flags().StringP("account-number", "n", "", "AWS Account Number")
+
+	configCmd.AddCommand(deleteCmd)
+	deleteCmd.Flags().StringP("account-number", "a", "", "AWS Account Number")
+
+}
