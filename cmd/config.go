@@ -18,11 +18,11 @@ var configCmd = &cobra.Command{
 }
 
 func addEntrypoint(cmd *cobra.Command, args []string) {
-	accountName, _ := cmd.Flags().GetString("account-name")
-	accountNumber, _ := cmd.Flags().GetString("account-number")
+	accountName, _ := cmd.Flags().GetString("name")
+	accountNumber, _ := cmd.Flags().GetString("account")
 
 	if accountName == "" || accountNumber == "" {
-		fmt.Println("--account-name and --account-number are required")
+		fmt.Println("--name and --account are required")
 		os.Exit(1)
 	}
 
@@ -32,8 +32,14 @@ func addEntrypoint(cmd *cobra.Command, args []string) {
 	cfg, err := cfgPath.LoadConfig()
 	internal.HandelError(err)
 
-	if cfg.AccountExists(accountNumber) {
-		fmt.Printf("Account already exists in config: %s\n", accountNumber)
+	if cfg.AccountExists(accountName) {
+		fmt.Printf("Account %s already exists in the config\n", accountName)
+		os.Exit(1)
+	}
+
+	account := cfg.GetAccountByNumber(accountNumber)
+	if account != "" {
+		fmt.Printf("Account Number %s already exists in the config as %s\n", accountNumber, account)
 		os.Exit(1)
 	}
 
@@ -73,10 +79,10 @@ var viewCmd = &cobra.Command{
 }
 
 func deleteEntrypoint(cmd *cobra.Command, args []string) {
-	accountNumber, _ := cmd.Flags().GetString("account-number")
+	accountName, _ := cmd.Flags().GetString("name")
 
-	if accountNumber == "" {
-		fmt.Println("--account-number is required")
+	if accountName == "" {
+		fmt.Println("--name is required")
 		os.Exit(1)
 	}
 
@@ -86,18 +92,18 @@ func deleteEntrypoint(cmd *cobra.Command, args []string) {
 	cfg, err := cfgPath.LoadConfig()
 	internal.HandelError(err)
 
-	if !cfg.AccountExists(accountNumber) {
-		fmt.Printf("Account does not exist in config: %s\n", accountNumber)
+	if !cfg.AccountExists(accountName) {
+		fmt.Printf("Account %s does not exist in config\n", accountName)
 		os.Exit(1)
 	}
 
-	err = cfg.DeleteAccount(accountNumber)
-	internal.HandelError(err)
+	accountNumber := cfg.Accounts[accountName]
+	cfg.DeleteAccount(accountName)
 
 	err = cfgPath.SaveConfig(cfg)
 	internal.HandelError(err)
 
-	fmt.Printf("Deleted -- Account Number: %s\n", accountNumber)
+	fmt.Printf("Deleted -- Account Name: %s Number: %s\n", accountName, accountNumber)
 
 	os.Exit(0)
 }
@@ -141,10 +147,10 @@ func init() {
 	configCmd.AddCommand(viewCmd)
 
 	configCmd.AddCommand(addCmd)
-	addCmd.Flags().StringP("account-name", "a", "", "AWS Account Name")
-	addCmd.Flags().StringP("account-number", "n", "", "AWS Account Number")
+	addCmd.Flags().StringP("name", "n", "", "AWS Account Name")
+	addCmd.Flags().StringP("account", "a", "", "AWS Account Number")
 
 	configCmd.AddCommand(deleteCmd)
-	deleteCmd.Flags().StringP("account-number", "a", "", "AWS Account Number")
+	deleteCmd.Flags().StringP("name", "n", "", "AWS Account Name")
 
 }

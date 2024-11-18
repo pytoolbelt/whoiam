@@ -3,22 +3,12 @@ package internal
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"log"
-	"time"
-)
-
-package main
-
-import (
-"context"
-"fmt"
-"log"
-
-"github.com/aws/aws-sdk-go-v2/aws"
-"github.com/aws/aws-sdk-go-v2/config"
-"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/olekukonko/tablewriter"
 )
 
 type StsClient struct {
@@ -48,24 +38,18 @@ func (s *StsClient) GetCallerIdentity() (*sts.GetCallerIdentityOutput, error) {
 	return s.Client.GetCallerIdentity(ctx, input)
 }
 
-func StsGetCallerIdentity() {
-	// Load the shared AWS configuration
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
-	if err != nil {
-		log.Fatalf("unable to load SDK config, %v", err)
+func PrintCallerIdentityTable(identity *sts.GetCallerIdentityOutput, name string) {
+	// Create a new table
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Account", "Role Arn", "User ID"})
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
+	table.Append([]string{name, *identity.Account, *identity.Arn, *identity.UserId})
+	table.Render()
+}
+
+func AssertAccountAsExpected(identity *sts.GetCallerIdentityOutput, expectedAccount string) error {
+	if *identity.Account != expectedAccount {
+		return fmt.Errorf("Expected account %s, but got %s", expectedAccount, *identity.Account)
 	}
-
-	// Create an STS client
-	client := sts.NewFromConfig(cfg)
-
-	// Call the GetCallerIdentity API
-	result, err := client.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
-	if err != nil {
-		log.Fatalf("unable to get caller identity, %v", err)
-	}
-
-	// Print the caller identity
-	fmt.Printf("Account: %s\n", *result.Account)
-	fmt.Printf("ARN: %s\n", *result.Arn)
-	fmt.Printf("UserId: %s\n", *result.UserId)
+	return nil
 }

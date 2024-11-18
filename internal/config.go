@@ -15,21 +15,7 @@ type ConfigPath struct {
 }
 
 type Config struct {
-	Accounts []Account `yaml:"accounts"`
-}
-
-type Account struct {
-	Name   string `yaml:"name"`
-	Number string `yaml:"number"`
-}
-
-func GetWhoiamConfigDir() (*ConfigPath, error) {
-	usr, err := user.Current()
-	if err != nil {
-		return nil, err
-	}
-	path := usr.HomeDir + "/.whoiam"
-	return &ConfigPath{Path: path}, nil
+	Accounts map[string]string `yaml:"accounts"`
 }
 
 func NewConfigPath() (*ConfigPath, error) {
@@ -42,12 +28,11 @@ func NewConfigPath() (*ConfigPath, error) {
 }
 
 func NewTemplateConfig() (*Config, error) {
-	var accounts []Account
-	account := Account{Name: "my-account", Number: "123456789012"}
-	accounts = append(accounts, account)
+	account := make(map[string]string)
+	account["account"] = "123456789012"
 
 	return &Config{
-		Accounts: accounts,
+		Accounts: account,
 	}, nil
 }
 
@@ -109,39 +94,38 @@ func (c *ConfigPath) SaveConfig(config *Config) error {
 	return nil
 }
 
-func (c *Config) AccountExists(number string) bool {
-	for _, account := range c.Accounts {
-		if account.Number == number {
-			return true
-		}
-	}
-	return false
+func (c *Config) AccountExists(name string) bool {
+	_, exists := c.Accounts[name]
+	return exists
 }
 
 func (c *Config) AddAccount(name, number string) error {
 	if err := ValidateAccountNumber(number); err != nil {
 		return err
 	}
-	c.Accounts = append(c.Accounts, Account{Name: name, Number: number})
+	c.Accounts[name] = number
 	return nil
 }
 
-func (c *Config) DeleteAccount(number string) error {
-	for i, account := range c.Accounts {
-		if account.Number == number {
-			c.Accounts = append(c.Accounts[:i], c.Accounts[i+1:]...)
-			return nil
+func (c *Config) DeleteAccount(name string) {
+	delete(c.Accounts, name)
+}
+
+func (c *Config) GetAccountByNumber(number string) string {
+	for key, value := range c.Accounts {
+		if value == number {
+			return key
 		}
 	}
-	return fmt.Errorf("account not found")
+	return ""
 }
 
 func (c *Config) PrintConfigTable() {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Account Name", "Account Number"})
 	table.SetAlignment(tablewriter.ALIGN_CENTER)
-	for _, account := range c.Accounts {
-		table.Append([]string{account.Name, account.Number})
+	for name, account := range c.Accounts {
+		table.Append([]string{name, account})
 	}
 	table.Render()
 }
