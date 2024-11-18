@@ -46,8 +46,6 @@ changelog:
       - "^docs:"
       - "^test:"
 
-
-
 brews:
   - name: whoiam
     homepage: https://github.com/pytoolbelt/whoiam
