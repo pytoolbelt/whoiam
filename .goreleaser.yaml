@@ -1,19 +1,10 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
-
-# The lines below are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/need to use them.
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
-
 version: 2
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
+    - go test ./...
+    - go fmt ./...
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
 
 builds:
   - env:
@@ -22,10 +13,12 @@ builds:
       - linux
       - windows
       - darwin
+    flags:
+      - -mod=vendor
+    binary: whoiam
 
 archives:
   - format: tar.gz
-    # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -33,10 +26,18 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
     format_overrides:
       - goos: windows
         format: zip
+
+  - format: binary
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 changelog:
   sort: asc
@@ -44,3 +45,18 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+
+
+brews:
+  - name: whoiam
+    homepage: https://github.com/pytoolbelt/whoiam
+    repository:
+      owner: pytoolbelt
+      name: homebrew-awstools
+    commit_author:
+      name: Jesse Maitland
+      email: jesse@pytoolbelt.com
+
+checksum:
+  name_template: 'checksums.txt'
