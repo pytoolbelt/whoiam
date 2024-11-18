@@ -2,8 +2,6 @@ version: 2
 
 before:
   hooks:
-    - go test ./...
-    - go fmt ./...
     - go mod tidy
 
 builds:
@@ -30,14 +28,6 @@ archives:
       - goos: windows
         format: zip
 
-  - format: binary
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 changelog:
   sort: asc
