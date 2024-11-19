@@ -61,6 +61,13 @@ go build -o whoiam
 whoiam --help
 ```
 
+## Initialisation
+A config file can be generated at the default location `~/.whoiam/whoiam.yaml` by running the following command:
+
+```sh
+whoiam config init
+```
+
 ## Configuration
 
 `whoiam` uses the AWS SDK for Go, so it will look for credentials and configuration in the default locations used by the AWS CLI and SDKs.

@@ -1,6 +1,13 @@
 site_name: whoiam Documentation
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/git-alt
+  palette:
+    primary: deep purple
+
+repo_url: https://github.com/pytoolbelt/whoiam
+repo_name: pytoolbelt/whoiam
 
 nav:
   - Home: index.md

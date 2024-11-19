@@ -5,7 +5,7 @@
 To install `whoiam` using Homebrew, run the following commands:
 
 ```sh
-brew tap pytoolbelt/homebrew-awstools && \
+brew tap pytoolbelt/awstools && \
 brew install whoiam
 ```
 
